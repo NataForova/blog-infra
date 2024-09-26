@@ -1,0 +1,71 @@
+version: '3.8'
+services:
+    blog-watcher:
+      build: blog-watcher/
+      container_name: blog-watcher
+      ports:
+        - "8081:8081"
+      depends_on:
+        - mongo
+        - kafka
+      env_file:
+        - .env
+
+    mongo:
+      image: mongo:latest
+      container_name: mongo
+      restart: always
+      ports:
+        - "27017:27017"
+      environment:
+        MONGO_INITDB_DATABASE: blog-watcher
+      volumes:
+        - mongodata:/data/db
+
+    blog:
+      build: blog/
+      ports:
+        - "8080:8080"
+      depends_on:
+        - db
+        - kafka
+      env_file:
+        - .env
+
+    db:
+      image: postgres:latest
+      restart: always
+      container_name: db
+      environment:
+        POSTGRES_DB: blog
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: postgres
+      volumes:
+        - pgdata:/var/lib/postgresql/data
+
+    zookeeper:
+      image: wurstmeister/zookeeper:latest
+      platform: linux/amd64
+      ports:
+        - "2181:2181"
+
+    kafka:
+        image: wurstmeister/kafka:latest
+        container_name: kafka
+        ports:
+          - "9092:9092"
+        expose:
+          - "9093"
+        environment:
+          KAFKA_ADVERTISED_LISTENERS: INSIDE://kafka:9093,OUTSIDE://localhost:9092
+          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+          KAFKA_LISTENERS: INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+          KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+          KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+          KAFKA_CREATE_TOPICS: "blog-events:1:1"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  pgdata:
+  mongodata:

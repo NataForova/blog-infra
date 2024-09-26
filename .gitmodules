@@ -1,0 +1,6 @@
+[submodule "blog"]
+	path = blog
+	url = git@github.com:NataForova/blog.git
+[submodule "blog-watcher"]
+	path = blog-watcher
+	url = git@github.com:NataForova/blog-watcher.git
